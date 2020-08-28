@@ -50,3 +50,13 @@ In my mind the final version would be much more slick hiding most of the paramet
 
 Finally: replace in the files "Cucina" (italian for kitchen :-) with your rooms light/sensor name. The Sensors name is "Divano" again replace with yours.
 Attached a couple of rough images of the UI and the flow
+
+nodes used:
+node-red-contrib-state-machine
+node-red-contrib-mytimeout
+node-red-contrib-home-assistant-websocket
+node-red-contrib-zigbee2mqtt
+node-red-contrib-nighttime
+
+Plus additional subflow (file subflow)
+
