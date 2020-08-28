@@ -1,0 +1,48 @@
+##################################################################################
+# Number Input for Intelligent Configurable Light : Minimal luminance to trigger movement automation
+# If luminance based trigger is enabled and luminance from sensor is below tis value light will turn on
+#################################################################################
+
+luminance_minimum_cucina:
+#  initial: 10
+  min: 0
+  max: 1000
+  step: 1
+  mode: slider
+
+##################################################################################
+# Number Input for Intelligent Configurable Light : Nightmode light intensity
+# Light Intensity to set during "deep night" interval
+##################################################################################
+
+nightmode_luminance_cucina:
+#  initial: 10
+  min: 0
+  max: 100
+  step: 1
+  mode: slider
+
+##################################################################################
+# Number Input for Intelligent Configurable Light : Timeout in Seconds for Movement Sensor Automation
+# Amount of seconds after which, if no movement is detected, light will be turned off
+# If rolling window is enabled at each new movement, if all conditions are met, countdown will be reset
+##################################################################################
+movement_sensor_automation_timeout_cucina:
+#  initial: 30
+  min: 0
+  max: 300
+  step: 1
+  mode: slider
+
+##################################################################################
+# Number Input for Intelligent Configurable Light : Timeout in Seconds for Switch Automation
+# Amount of seconds after which, if no action on switch is detected, movement sensor automation will be reenabled
+# If rolling window is enabled at each new interaction, if all conditions are met, countdown will be reset
+##################################################################################
+manual_switch_automation_timeout_cucina:
+#  initial: 10
+  min: 1
+  max: 300
+  step: 1
+  mode: slider
+
