@@ -1,0 +1,29 @@
+##################################################################################
+# Time Ranges for Intelligent Configurable Light : validity timerange for  Movement Sensor Automation
+# Use this range to set timerange for Movement Sensor Automation
+##################################################################################
+
+night_start_cucina:
+  name: Night Start Cucina
+  has_date: false
+  has_time: true
+
+night_stop_cucina:
+  name: Night Stop Cucina
+  has_date: false
+  has_time: true
+
+##################################################################################
+# Time Ranges for Intelligent Configurable Light : timerange for reduced light intensity
+# Use this range to set timerange for "night light mode"
+##################################################################################
+
+nightmode_start_cucina:
+  name: Night Mode Start Cucina
+  has_date: false
+  has_time: true
+
+nightmode_stop_cucina:
+  name: Night Mode Stop Cucina
+  has_date: false
+  has_time: true
