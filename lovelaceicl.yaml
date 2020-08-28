@@ -1,0 +1,88 @@
+title: Intelligent Configurable Light
+name: ICL
+path: ICL
+cards:
+  - type: custom:stack-in-card
+    title: Intelligent Configurable Light
+    mode: vertical
+    cards:
+    - type : entities
+      show_header_toggle: false
+      entities:
+        - sensor.light_state_cucina
+        - light.luce_cucina
+        - light.luce_cucina_hue
+        - input_boolean.movement_sensor_automation_cucina
+        - input_boolean.movement_sensor_automation_override_cucina
+        - input_select.time_range_type_cucina
+        - sensor.movimento_divano_illuminance
+    - type: custom:slider-entity-row
+      entity: input_number.luminance_minimum_cucina
+    - type: custom:slider-entity-row
+      entity: input_number.movement_sensor_automation_timeout_cucina
+    - type: "custom:config-template-card"
+      entities:
+          - sensor.actual_movement_sensor_automation_timer_cucina 
+      variables: 
+          - states['input_number.movement_sensor_automation_timeout_cucina'].state
+      card:
+          type: custom:bar-card
+          entities:
+          - entity: sensor.actual_movement_sensor_automation_timer_cucina
+            min: 0
+            max: '${vars[0]}'
+            positions:
+              minmax: off
+              name: 'off'
+              indicator: 'off'
+              value: 'off'
+            height: 10px
+            icon: 'off'
+    - type: 'custom:time-picker-card'
+      entity: input_datetime.night_start_cucina
+      layout:
+        name: inside
+    - type: 'custom:time-picker-card'
+      entity: input_datetime.night_stop_cucina
+      layout:
+        name: inside        
+    - type: custom:slider-entity-row
+      entity: input_number.nightmode_luminance_cucina
+    - type: 'custom:time-picker-card'
+      entity: input_datetime.nightmode_start_cucina
+      layout:
+        name: inside
+    - type: 'custom:time-picker-card'
+      entity: input_datetime.nightmode_stop_cucina
+      layout:
+        name: inside        
+            
+    - type : entities
+      show_header_toggle: false
+      entities:
+        - input_boolean.manual_switch_automation_cucina
+        - input_boolean.manual_switch_automation_override_cucina
+    - type: custom:slider-entity-row
+      entity: input_number.manual_switch_automation_timeout_cucina
+    - type: "custom:config-template-card"
+      entities:
+          - sensor.actual_manual_switch_automation_timer_cucina
+      variables: 
+          - states['input_number.manual_switch_automation_timeout_cucina'].state
+      card:
+          type: custom:bar-card
+          entities:
+          - entity: sensor.actual_manual_switch_automation_timer_cucina
+            min: 0
+            max: "${vars[0]}"
+            positions:
+              minmax: off
+              name: 'off'
+              indicator: 'off'
+              value: 'off'
+            height: 10px
+            icon: 'off'
+    - type : entities
+      entities:
+        - input_boolean.manual_auto_off_cucina
+
