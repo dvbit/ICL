@@ -1,0 +1,182 @@
+[
+    {
+        "id": "e5d263c2.5412e",
+        "type": "subflow",
+        "name": "timerange",
+        "info": "Lets through or blocks a payload\nbased on a time range. This can\neither be configured through the\nenviroment variables in the node ui\nor as described below with a message\nthat has an override topic.\nIf in range the msg will be passed\nto the first output and otherwise\nto the second.\nThe start and stop time needs\nto be defined in an hh:mm format.\nThere is also a week array. The week\nstarts on monday so 4 for example is\nThursday. Payload will only be passed\non days that are in the array.\nOut of time range payloads will\nbe redirected to the second output.\nThe schedule can be overriden by injecting\na message with the topic of \"override\"\nthat contains a ```msg.payload``` object with the\nkeys of \"start\",\"stop\",\"days\" like\nthis:\n```\n{\n    \"start\": \"10:00\",\n    \"stop\": \"14:00\",\n    \"days\": [\n        1,\n        2,\n        3,\n        4,\n        5,\n        6,\n        7\n    ]\n}\n```\nStart and stop need to be strings in the hh:mm\nformat and days an array of numbers as\ndescribed above.\nThe override can be deleted by injecting a\nmsg.payload string \"reset\".",
+        "category": "",
+        "in": [
+            {
+                "x": 100,
+                "y": 100,
+                "wires": [
+                    {
+                        "id": "cb0129a3.24c978"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 620,
+                "y": 60,
+                "wires": [
+                    {
+                        "id": "ce45d70.27b8828",
+                        "port": 0
+                    }
+                ]
+            },
+            {
+                "x": 620,
+                "y": 140,
+                "wires": [
+                    {
+                        "id": "ce45d70.27b8828",
+                        "port": 1
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "start",
+                "type": "str",
+                "value": "00:00",
+                "ui": {
+                    "icon": "font-awesome/fa-arrow-right",
+                    "label": {
+                        "en-US": "from hh:mm"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "stop",
+                "type": "str",
+                "value": "00:00",
+                "ui": {
+                    "icon": "font-awesome/fa-circle",
+                    "label": {
+                        "en-US": "until hh:mm"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "days",
+                "type": "json",
+                "value": "[1,2,3,4,5,6,7]",
+                "ui": {
+                    "icon": "font-awesome/fa-calendar",
+                    "label": {
+                        "en-US": "days"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "json"
+                        ]
+                    }
+                }
+            }
+        ],
+        "color": "#C7E9C0",
+        "inputLabels": [
+            "payload input"
+        ],
+        "outputLabels": [
+            "in time range",
+            "out of time range"
+        ],
+        "icon": "node-red/switch.svg",
+        "status": {
+            "x": 480,
+            "y": 200,
+            "wires": [
+                {
+                    "id": "41f5822d.e3789c",
+                    "port": 0
+                }
+            ]
+        }
+    },
+    {
+        "id": "ce45d70.27b8828",
+        "type": "function",
+        "z": "e5d263c2.5412e",
+        "name": "is in range?",
+        "func": "const schedule = flow.get(\"schedule\");\nlet start = env.get(\"start\");\nlet stop = env.get(\"stop\");\nlet days = env.get(\"days\");\nif(schedule !== undefined){\n    start = schedule.start;\n    stop = schedule.stop;\n    days = schedule.days;\n}\nconst time = new Date();\nlet day = time.getDay();\nif(day === 0) day = 7;\nlet hour = String(time.getHours());\nlet minute = String(time.getMinutes());\nif(hour.length == 1) hour = \"0\" + hour;\nif(minute.length == 1) minute = \"0\" + minute;\nconst hmtime = hour + \":\" + minute;\nif(days.includes(day)){\n    if(start == stop){\n        return [msg, null];\n    } else if(start > stop){\n        if(hmtime >= start || hmtime < stop){\n            return [msg, null];\n        } else {\n            return [null, msg];\n        }\n    } else if(hmtime >= start && hmtime < stop){\n        return [msg, null];\n    } else {\n        return [null, msg];\n    }\n} else {\n    return null;\n}",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 450,
+        "y": 100,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "5b8343f7.a0391c",
+        "type": "inject",
+        "z": "e5d263c2.5412e",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "x": 170,
+        "y": 200,
+        "wires": [
+            [
+                "41f5822d.e3789c"
+            ]
+        ]
+    },
+    {
+        "id": "41f5822d.e3789c",
+        "type": "function",
+        "z": "e5d263c2.5412e",
+        "name": "display rule",
+        "func": "const schedule = flow.get(\"schedule\");\nif(typeof schedule == \"object\"){\n    const start = schedule.start;\n    const stop = schedule.stop;\n    const days = String(schedule.days);\n    msg.payload = \"override: \" + start + \"-\" + stop + \"/\" + days;\n} else {\n    const start = env.get(\"start\");\n    const stop = env.get(\"stop\");\n    const days = String(env.get(\"days\"));\n    const override = false;\n    msg.payload = start + \"-\" + stop + \"/\" + days;\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 350,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cb0129a3.24c978",
+        "type": "function",
+        "z": "e5d263c2.5412e",
+        "name": "check for override",
+        "func": "if(msg.topic == \"override\"){\n    flow.set(\"schedule\",msg.payload);\n    return [null, msg];\n} else if (msg.payload == \"reset\"){\n    let reset;\n    flow.set(\"schedule\",reset);\n    return [null, msg];\n} else {\n    return [msg, null];\n}",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 250,
+        "y": 100,
+        "wires": [
+            [
+                "ce45d70.27b8828"
+            ],
+            [
+                "41f5822d.e3789c"
+            ]
+        ]
+    }
+]
