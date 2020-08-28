@@ -1,0 +1,13 @@
+##################################################################################
+# Select for Intelligent Configurable Light : Use night status / time range for automation trigger
+# Sun:  node-red-contrib-nighttime will be used : if it is night automation will be triggered
+# Timerange: timerenage setup via UI will be used : if in time range automation will be triggered
+# Alwayson: No time restriction, always trigger.
+##################################################################################
+time_range_type_cucina:
+  name: Time Range Type Cucina
+  options:
+    - Sun
+    - Timerange
+    - Alwayson
+  initial: Timerange
