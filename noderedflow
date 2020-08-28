@@ -1,0 +1,2103 @@
+[
+    {
+        "id": "e5d263c2.5412e",
+        "type": "subflow",
+        "name": "timerange",
+        "info": "Lets through or blocks a payload\nbased on a time range. This can\neither be configured through the\nenviroment variables in the node ui\nor as described below with a message\nthat has an override topic.\nIf in range the msg will be passed\nto the first output and otherwise\nto the second.\nThe start and stop time needs\nto be defined in an hh:mm format.\nThere is also a week array. The week\nstarts on monday so 4 for example is\nThursday. Payload will only be passed\non days that are in the array.\nOut of time range payloads will\nbe redirected to the second output.\nThe schedule can be overriden by injecting\na message with the topic of \"override\"\nthat contains a ```msg.payload``` object with the\nkeys of \"start\",\"stop\",\"days\" like\nthis:\n```\n{\n    \"start\": \"10:00\",\n    \"stop\": \"14:00\",\n    \"days\": [\n        1,\n        2,\n        3,\n        4,\n        5,\n        6,\n        7\n    ]\n}\n```\nStart and stop need to be strings in the hh:mm\nformat and days an array of numbers as\ndescribed above.\nThe override can be deleted by injecting a\nmsg.payload string \"reset\".",
+        "category": "",
+        "in": [
+            {
+                "x": 100,
+                "y": 100,
+                "wires": [
+                    {
+                        "id": "cb0129a3.24c978"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 620,
+                "y": 60,
+                "wires": [
+                    {
+                        "id": "ce45d70.27b8828",
+                        "port": 0
+                    }
+                ]
+            },
+            {
+                "x": 620,
+                "y": 140,
+                "wires": [
+                    {
+                        "id": "ce45d70.27b8828",
+                        "port": 1
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "start",
+                "type": "str",
+                "value": "00:00",
+                "ui": {
+                    "icon": "font-awesome/fa-arrow-right",
+                    "label": {
+                        "en-US": "from hh:mm"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "stop",
+                "type": "str",
+                "value": "00:00",
+                "ui": {
+                    "icon": "font-awesome/fa-circle",
+                    "label": {
+                        "en-US": "until hh:mm"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "days",
+                "type": "json",
+                "value": "[1,2,3,4,5,6,7]",
+                "ui": {
+                    "icon": "font-awesome/fa-calendar",
+                    "label": {
+                        "en-US": "days"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "json"
+                        ]
+                    }
+                }
+            }
+        ],
+        "color": "#C7E9C0",
+        "inputLabels": [
+            "payload input"
+        ],
+        "outputLabels": [
+            "in time range",
+            "out of time range"
+        ],
+        "icon": "node-red/switch.svg",
+        "status": {
+            "x": 480,
+            "y": 200,
+            "wires": [
+                {
+                    "id": "41f5822d.e3789c",
+                    "port": 0
+                }
+            ]
+        }
+    },
+    {
+        "id": "ce45d70.27b8828",
+        "type": "function",
+        "z": "e5d263c2.5412e",
+        "name": "is in range?",
+        "func": "const schedule = flow.get(\"schedule\");\nlet start = env.get(\"start\");\nlet stop = env.get(\"stop\");\nlet days = env.get(\"days\");\nif(schedule !== undefined){\n    start = schedule.start;\n    stop = schedule.stop;\n    days = schedule.days;\n}\nconst time = new Date();\nlet day = time.getDay();\nif(day === 0) day = 7;\nlet hour = String(time.getHours());\nlet minute = String(time.getMinutes());\nif(hour.length == 1) hour = \"0\" + hour;\nif(minute.length == 1) minute = \"0\" + minute;\nconst hmtime = hour + \":\" + minute;\nif(days.includes(day)){\n    if(start == stop){\n        return [msg, null];\n    } else if(start > stop){\n        if(hmtime >= start || hmtime < stop){\n            return [msg, null];\n        } else {\n            return [null, msg];\n        }\n    } else if(hmtime >= start && hmtime < stop){\n        return [msg, null];\n    } else {\n        return [null, msg];\n    }\n} else {\n    return null;\n}",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 450,
+        "y": 100,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "5b8343f7.a0391c",
+        "type": "inject",
+        "z": "e5d263c2.5412e",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "x": 170,
+        "y": 200,
+        "wires": [
+            [
+                "41f5822d.e3789c"
+            ]
+        ]
+    },
+    {
+        "id": "41f5822d.e3789c",
+        "type": "function",
+        "z": "e5d263c2.5412e",
+        "name": "display rule",
+        "func": "const schedule = flow.get(\"schedule\");\nif(typeof schedule == \"object\"){\n    const start = schedule.start;\n    const stop = schedule.stop;\n    const days = String(schedule.days);\n    msg.payload = \"override: \" + start + \"-\" + stop + \"/\" + days;\n} else {\n    const start = env.get(\"start\");\n    const stop = env.get(\"stop\");\n    const days = String(env.get(\"days\"));\n    const override = false;\n    msg.payload = start + \"-\" + stop + \"/\" + days;\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 350,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cb0129a3.24c978",
+        "type": "function",
+        "z": "e5d263c2.5412e",
+        "name": "check for override",
+        "func": "if(msg.topic == \"override\"){\n    flow.set(\"schedule\",msg.payload);\n    return [null, msg];\n} else if (msg.payload == \"reset\"){\n    let reset;\n    flow.set(\"schedule\",reset);\n    return [null, msg];\n} else {\n    return [msg, null];\n}",
+        "outputs": 2,
+        "noerr": 0,
+        "x": 250,
+        "y": 100,
+        "wires": [
+            [
+                "ce45d70.27b8828"
+            ],
+            [
+                "41f5822d.e3789c"
+            ]
+        ]
+    },
+    {
+        "id": "936cf0a3.29d0c",
+        "type": "tab",
+        "label": "Intelligent Configurable Light",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "b4ea327f.32e8e",
+        "type": "trigger-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Light Cucina",
+        "server": "89295009.0df17",
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityid": "light.luce_cucina",
+        "entityidfiltertype": "regex",
+        "debugenabled": false,
+        "constraints": [],
+        "constraintsmustmatch": "all",
+        "outputs": 2,
+        "customoutputs": [],
+        "outputinitially": false,
+        "state_type": "str",
+        "x": 130,
+        "y": 760,
+        "wires": [
+            [
+                "10ccb914.30abd7"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "32aa4bf.f70e0b4",
+        "type": "api-call-service",
+        "z": "936cf0a3.29d0c",
+        "name": "Turn On Light Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "debugenabled": false,
+        "service_domain": "light",
+        "service": "turn_on",
+        "entityId": "light.luce_cucina",
+        "data": "",
+        "dataType": "json",
+        "mergecontext": "",
+        "output_location": "",
+        "output_location_type": "none",
+        "mustacheAltTags": false,
+        "x": 2035,
+        "y": 235,
+        "wires": [
+            [
+                "b7aa37b5.50b7d8",
+                "c9bd5260.eb5ca"
+            ]
+        ]
+    },
+    {
+        "id": "90f4e44e.d75de8",
+        "type": "api-call-service",
+        "z": "936cf0a3.29d0c",
+        "name": "Turn Off Light Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "debugenabled": false,
+        "service_domain": "light",
+        "service": "turn_off",
+        "entityId": "light.luce_cucina",
+        "data": "",
+        "dataType": "json",
+        "mergecontext": "",
+        "output_location": "",
+        "output_location_type": "none",
+        "mustacheAltTags": false,
+        "x": 2035,
+        "y": 315,
+        "wires": [
+            [
+                "64d634ae.aff3bc"
+            ]
+        ]
+    },
+    {
+        "id": "a711ae69.f83cf",
+        "type": "state-machine",
+        "z": "936cf0a3.29d0c",
+        "name": "Light Finite State Machine Cucina",
+        "triggerProperty": "payload",
+        "triggerPropertyType": "msg",
+        "stateProperty": "payload",
+        "statePropertyType": "msg",
+        "outputStateChangeOnly": true,
+        "throwException": false,
+        "states": [
+            "switch",
+            "motion-detected",
+            "motion-on",
+            "motion-off",
+            "off",
+            "on",
+            "Override"
+        ],
+        "transitions": [
+            {
+                "name": "motion",
+                "from": "off",
+                "to": "motion-detected"
+            },
+            {
+                "name": "motion",
+                "from": "motion-on",
+                "to": "motion-on"
+            },
+            {
+                "name": "off",
+                "from": "*",
+                "to": "off"
+            },
+            {
+                "name": "on",
+                "from": "*",
+                "to": "on"
+            },
+            {
+                "name": "switch",
+                "from": "off",
+                "to": "switch"
+            },
+            {
+                "name": "switch",
+                "from": "on",
+                "to": "switch"
+            },
+            {
+                "name": "switch",
+                "from": "switch",
+                "to": "switch"
+            },
+            {
+                "name": "switch",
+                "from": "motion-on",
+                "to": "switch"
+            },
+            {
+                "name": "motion-on",
+                "from": "motion-detected",
+                "to": "motion-on"
+            },
+            {
+                "name": "motion-off",
+                "from": "motion-on",
+                "to": "motion-off"
+            },
+            {
+                "name": "motion-off",
+                "from": "on",
+                "to": "motion-off"
+            }
+        ],
+        "x": 1195,
+        "y": 395,
+        "wires": [
+            [
+                "6a3a424d.73f29c",
+                "c0ca605e.7021",
+                "527be6bf.df8bb8",
+                "43cb9cd.a34ad64",
+                "d4ab6577.67ce18"
+            ]
+        ]
+    },
+    {
+        "id": "a236d52c.04d2c8",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "switch",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "switch",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 990,
+        "y": 760,
+        "wires": [
+            [
+                "a711ae69.f83cf"
+            ]
+        ]
+    },
+    {
+        "id": "48bc7e9b.ed524",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "Motion!",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "motion",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 955,
+        "y": 395,
+        "wires": [
+            [
+                "a711ae69.f83cf"
+            ]
+        ]
+    },
+    {
+        "id": "507dab76.9e6d74",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Light State Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": true,
+        "entity_id": "light.luce_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 3005,
+        "y": 515,
+        "wires": [
+            [
+                "b014ed9a.a165c"
+            ]
+        ]
+    },
+    {
+        "id": "5fe2b88e.e6df68",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "stop",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "stop",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 2225,
+        "y": 535,
+        "wires": [
+            [
+                "6c95529c.3bd2ec"
+            ]
+        ]
+    },
+    {
+        "id": "aeeddf43.36a8e",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "motion-on",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "motion-on",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 2955,
+        "y": 455,
+        "wires": [
+            [
+                "b014ed9a.a165c"
+            ]
+        ]
+    },
+    {
+        "id": "9d3196d8.dfe1d8",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "motion-off",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "motion-off",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 3075,
+        "y": 615,
+        "wires": [
+            [
+                "b014ed9a.a165c"
+            ]
+        ]
+    },
+    {
+        "id": "64d634ae.aff3bc",
+        "type": "stoptimer",
+        "z": "936cf0a3.29d0c",
+        "duration": "5",
+        "units": "Second",
+        "payloadtype": "num",
+        "payloadval": "0",
+        "name": "Wait For UI Settle",
+        "x": 2450,
+        "y": 320,
+        "wires": [
+            [
+                "507dab76.9e6d74"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "c9bd5260.eb5ca",
+        "type": "stoptimer",
+        "z": "936cf0a3.29d0c",
+        "duration": "7",
+        "units": "Second",
+        "payloadtype": "num",
+        "payloadval": "0",
+        "name": "Wait For UI Settle",
+        "x": 2450,
+        "y": 280,
+        "wires": [
+            [
+                "aeeddf43.36a8e"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "85e82051.80381",
+        "type": "inject",
+        "z": "936cf0a3.29d0c",
+        "name": "Initial / Reset State",
+        "topic": "",
+        "payload": "stop",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 1646,
+        "y": 695,
+        "wires": [
+            [
+                "507dab76.9e6d74",
+                "8797e555.b37e58"
+            ]
+        ]
+    },
+    {
+        "id": "6a3a424d.73f29c",
+        "type": "switch",
+        "z": "936cf0a3.29d0c",
+        "name": "motion-detected",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "motion-detected",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1555,
+        "y": 315,
+        "wires": [
+            [
+                "32aa4bf.f70e0b4"
+            ]
+        ]
+    },
+    {
+        "id": "c0ca605e.7021",
+        "type": "switch",
+        "z": "936cf0a3.29d0c",
+        "name": "motion-on",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "motion-on",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1575,
+        "y": 395,
+        "wires": [
+            [
+                "5b7238d7.9b17b8"
+            ]
+        ]
+    },
+    {
+        "id": "bdf60e2e.4efcd",
+        "type": "link in",
+        "z": "936cf0a3.29d0c",
+        "name": "Luce Cucina State Machine Link in",
+        "links": [
+            "b014ed9a.a165c"
+        ],
+        "x": 990,
+        "y": 275,
+        "wires": [
+            [
+                "a711ae69.f83cf"
+            ]
+        ]
+    },
+    {
+        "id": "b014ed9a.a165c",
+        "type": "link out",
+        "z": "936cf0a3.29d0c",
+        "name": "Luce Cucina State Machine Link out",
+        "links": [
+            "bdf60e2e.4efcd"
+        ],
+        "x": 3210,
+        "y": 535,
+        "wires": []
+    },
+    {
+        "id": "527be6bf.df8bb8",
+        "type": "switch",
+        "z": "936cf0a3.29d0c",
+        "name": "switch",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "switch",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1605,
+        "y": 555,
+        "wires": [
+            [
+                "5fe2b88e.e6df68",
+                "8797e555.b37e58"
+            ]
+        ]
+    },
+    {
+        "id": "43cb9cd.a34ad64",
+        "type": "switch",
+        "z": "936cf0a3.29d0c",
+        "name": "motion-off",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "motion-off",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1575,
+        "y": 355,
+        "wires": [
+            [
+                "90f4e44e.d75de8"
+            ]
+        ]
+    },
+    {
+        "id": "c872373c.a21498",
+        "type": "mqtt in",
+        "z": "936cf0a3.29d0c",
+        "name": "Movement Detected?",
+        "topic": "zigbee2mqtt/Movimento Divano",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "b687ce87.d2e7d",
+        "x": 175,
+        "y": 55,
+        "wires": [
+            [
+                "2a33d7cd.d04a78",
+                "e6959ece.3fc16"
+            ]
+        ]
+    },
+    {
+        "id": "2a33d7cd.d04a78",
+        "type": "json",
+        "z": "936cf0a3.29d0c",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 125,
+        "y": 115,
+        "wires": [
+            [
+                "b72a1d3.5aed6e"
+            ]
+        ]
+    },
+    {
+        "id": "b72a1d3.5aed6e",
+        "type": "switch",
+        "z": "936cf0a3.29d0c",
+        "name": "Movement",
+        "property": "payload.occupancy",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 265,
+        "y": 115,
+        "wires": [
+            [
+                "59b42ea.2e6dbd"
+            ]
+        ]
+    },
+    {
+        "id": "6c95529c.3bd2ec",
+        "type": "mytimeout",
+        "z": "936cf0a3.29d0c",
+        "name": "Movement Sensor Automation Timer Cucina",
+        "outtopic": "1",
+        "outsafe": "",
+        "outwarning": "",
+        "outunsafe": "off",
+        "warning": "0",
+        "timer": "240",
+        "debug": false,
+        "ndebug": false,
+        "ignoreCase": false,
+        "repeat": false,
+        "again": false,
+        "x": 2566,
+        "y": 435,
+        "wires": [
+            [
+                "9d3196d8.dfe1d8"
+            ],
+            [
+                "e32215ec.52fb18"
+            ]
+        ]
+    },
+    {
+        "id": "284dc6a0.2bbeaa",
+        "type": "mytimeout",
+        "z": "936cf0a3.29d0c",
+        "name": "Manual Switch Automation Timer Cucina",
+        "outtopic": "1",
+        "outsafe": "",
+        "outwarning": "",
+        "outunsafe": "off",
+        "warning": "0",
+        "timer": "300",
+        "debug": false,
+        "ndebug": false,
+        "ignoreCase": false,
+        "repeat": false,
+        "again": false,
+        "x": 2556,
+        "y": 615,
+        "wires": [
+            [
+                "507dab76.9e6d74",
+                "841db762.f38c48"
+            ],
+            [
+                "c03ab163.ac972"
+            ]
+        ]
+    },
+    {
+        "id": "46712406.0cb39c",
+        "type": "function",
+        "z": "936cf0a3.29d0c",
+        "name": "trim",
+        "func": "var str = msg.payload;\nvar res = str.slice(0,str.length-2);\nmsg.payload = {      \"timeout\": res,     \"warning\": 0 } ;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 2266,
+        "y": 435,
+        "wires": [
+            [
+                "6c95529c.3bd2ec"
+            ]
+        ]
+    },
+    {
+        "id": "76784031.12b3",
+        "type": "function",
+        "z": "936cf0a3.29d0c",
+        "name": "trim",
+        "func": "var str = msg.payload;\nvar res = str.slice(0,str.length-2);\nmsg.payload = {        \"timeout\": res,     \"warning\": 0 } ;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 2266,
+        "y": 615,
+        "wires": [
+            [
+                "284dc6a0.2bbeaa"
+            ]
+        ]
+    },
+    {
+        "id": "5b7238d7.9b17b8",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Movement Sensor Automation Timeout Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": false,
+        "entity_id": "input_number.movement_sensor_automation_timeout_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 1980,
+        "y": 440,
+        "wires": [
+            [
+                "46712406.0cb39c"
+            ]
+        ]
+    },
+    {
+        "id": "8797e555.b37e58",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Manual Switch Automation Timeout Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": false,
+        "entity_id": "input_number.manual_switch_automation_timeout_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 1990,
+        "y": 620,
+        "wires": [
+            [
+                "76784031.12b3"
+            ]
+        ]
+    },
+    {
+        "id": "92aef49d.03df98",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Automation Enabled?",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 2,
+        "halt_if": "on",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": false,
+        "entity_id": "input_boolean.movement_sensor_automation_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 195,
+        "y": 315,
+        "wires": [
+            [
+                "f51cc9ac.13dc68"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "e32215ec.52fb18",
+        "type": "ha-entity",
+        "z": "936cf0a3.29d0c",
+        "name": "Actual Movement Sensor Automation Timer Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "debugenabled": false,
+        "outputs": 1,
+        "entityType": "sensor",
+        "config": [
+            {
+                "property": "name",
+                "value": "Actual Movement Sensor Automation Timer Cucina "
+            },
+            {
+                "property": "device_class",
+                "value": "mdi: home-assistant"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            }
+        ],
+        "state": "payload",
+        "stateType": "msg",
+        "attributes": [],
+        "resend": true,
+        "outputLocation": "",
+        "outputLocationType": "none",
+        "inputOverride": "allow",
+        "x": 2586,
+        "y": 495,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c03ab163.ac972",
+        "type": "ha-entity",
+        "z": "936cf0a3.29d0c",
+        "name": "Actual Manual Switch Automation Timer Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "debugenabled": false,
+        "outputs": 1,
+        "entityType": "sensor",
+        "config": [
+            {
+                "property": "name",
+                "value": "Actual Manual Switch Automation Timer Cucina"
+            },
+            {
+                "property": "device_class",
+                "value": "mdi: home-assistant"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            }
+        ],
+        "state": "payload",
+        "stateType": "msg",
+        "attributes": [],
+        "resend": true,
+        "outputLocation": "",
+        "outputLocationType": "none",
+        "inputOverride": "allow",
+        "x": 2575,
+        "y": 675,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f51cc9ac.13dc68",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Automation Not Overridden?",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 2,
+        "halt_if": "off",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": false,
+        "entity_id": "input_boolean.movement_sensor_automation_override_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 215,
+        "y": 375,
+        "wires": [
+            [
+                "5de10aa2.ba6484"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "841db762.f38c48",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Auto Off Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 2,
+        "halt_if": "on",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": false,
+        "entity_id": "input_boolean.manual_auto_off_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 2855,
+        "y": 615,
+        "wires": [
+            [
+                "9d3196d8.dfe1d8"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "59b42ea.2e6dbd",
+        "type": "switch",
+        "z": "936cf0a3.29d0c",
+        "name": "Light Threshold Matched?",
+        "property": "payload.illuminance",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lte",
+                "v": "luminancethreshold",
+                "vt": "flow"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 185,
+        "y": 195,
+        "wires": [
+            [
+                "92aef49d.03df98"
+            ]
+        ]
+    },
+    {
+        "id": "e6959ece.3fc16",
+        "type": "trigger-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Light Threshold",
+        "server": "89295009.0df17",
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityid": "input_number.nightmode_luminance_cucina",
+        "entityidfiltertype": "exact",
+        "debugenabled": false,
+        "constraints": [],
+        "constraintsmustmatch": "all",
+        "outputs": 2,
+        "customoutputs": [],
+        "outputinitially": false,
+        "state_type": "num",
+        "x": 490,
+        "y": 60,
+        "wires": [
+            [
+                "7ff9d73a.6efb68"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "7ff9d73a.6efb68",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "Set Light Threshold Variable",
+        "rules": [
+            {
+                "t": "set",
+                "p": "luminancethreshold",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 795,
+        "y": 55,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "10ccb914.30abd7",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": " Manal  Switch Automation Mode Enabled?",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 2,
+        "halt_if": "on",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": false,
+        "entity_id": "input_boolean.manual_switch_automation_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 380,
+        "y": 760,
+        "wires": [
+            [
+                "e2fef061.bba82"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "d4ab6577.67ce18",
+        "type": "ha-entity",
+        "z": "936cf0a3.29d0c",
+        "name": "Light State Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "debugenabled": false,
+        "outputs": 1,
+        "entityType": "sensor",
+        "config": [
+            {
+                "property": "name",
+                "value": "Light State Cucina"
+            },
+            {
+                "property": "device_class",
+                "value": "sensor"
+            },
+            {
+                "property": "icon",
+                "value": "mdi:state-machine"
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            }
+        ],
+        "state": "payload",
+        "stateType": "msg",
+        "attributes": [],
+        "resend": true,
+        "outputLocation": "",
+        "outputLocationType": "none",
+        "inputOverride": "allow",
+        "x": 1525,
+        "y": 235,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1b86530f.43e72d",
+        "type": "subflow:e5d263c2.5412e",
+        "z": "936cf0a3.29d0c",
+        "name": "Automation Triggered in Time Range ?",
+        "env": [],
+        "x": 785,
+        "y": 515,
+        "wires": [
+            [
+                "48bc7e9b.ed524"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "e4a22c0a.df122",
+        "type": "nighttime",
+        "z": "936cf0a3.29d0c",
+        "name": "",
+        "lon": "12.175570",
+        "lat": "42.103600",
+        "start": "sunrise",
+        "end": "sunset",
+        "x": 160,
+        "y": 860,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "e84f022e.edb6",
+        "type": "switch",
+        "z": "936cf0a3.29d0c",
+        "name": "Is It Night?",
+        "property": "isNight",
+        "propertyType": "global",
+        "rules": [
+            {
+                "t": "true"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 525,
+        "y": 395,
+        "wires": [
+            [
+                "48bc7e9b.ed524"
+            ]
+        ]
+    },
+    {
+        "id": "5de10aa2.ba6484",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Time Range Type",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": false,
+        "entity_id": "input_select.time_range_type_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 185,
+        "y": 435,
+        "wires": [
+            [
+                "8fd0c075.6d53b"
+            ]
+        ]
+    },
+    {
+        "id": "8fd0c075.6d53b",
+        "type": "switch",
+        "z": "936cf0a3.29d0c",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "Sun",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "Alwayson",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "Timerange",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 370,
+        "y": 420,
+        "wires": [
+            [
+                "e84f022e.edb6"
+            ],
+            [
+                "48bc7e9b.ed524"
+            ],
+            [
+                "1b86530f.43e72d"
+            ]
+        ]
+    },
+    {
+        "id": "e2fef061.bba82",
+        "type": "api-current-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Manual Switch Automation Not Overridden?",
+        "server": "89295009.0df17",
+        "version": 1,
+        "outputs": 2,
+        "halt_if": "off",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "override_topic": false,
+        "entity_id": "input_boolean.manual_switch_automation_override_cucina",
+        "state_type": "str",
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "blockInputOverrides": false,
+        "x": 750,
+        "y": 760,
+        "wires": [
+            [
+                "a236d52c.04d2c8"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "b7aa37b5.50b7d8",
+        "type": "subflow:e5d263c2.5412e",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Brightness Level Cucina",
+        "env": [],
+        "x": 1325,
+        "y": 1075,
+        "wires": [
+            [
+                "93754f0c.56e83"
+            ],
+            [
+                "dcb61dad.0944"
+            ]
+        ]
+    },
+    {
+        "id": "a7199de4.f3c7c",
+        "type": "function",
+        "z": "936cf0a3.29d0c",
+        "name": "trim",
+        "func": "var str = msg.payload;\nvar start = str.slice(0,str.length-3) ;\nmsg.topic = \"start\" ;\nmsg.payload = start ;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 737,
+        "y": 935,
+        "wires": [
+            [
+                "32a5d844.fa4ee8"
+            ]
+        ]
+    },
+    {
+        "id": "32a5d844.fa4ee8",
+        "type": "join",
+        "z": "936cf0a3.29d0c",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "",
+        "joinerType": "str",
+        "accumulate": true,
+        "timeout": "",
+        "count": "1",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 945,
+        "y": 995,
+        "wires": [
+            [
+                "c0782576.3f89e8"
+            ]
+        ]
+    },
+    {
+        "id": "82f5622f.0fe55",
+        "type": "function",
+        "z": "936cf0a3.29d0c",
+        "name": "trim",
+        "func": "var str = msg.payload;\nvar stop = str.slice(0,str.length-3) ;\nmsg.topic = \"stop\" ;\nmsg.payload = stop ;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 725,
+        "y": 1055,
+        "wires": [
+            [
+                "32a5d844.fa4ee8"
+            ]
+        ]
+    },
+    {
+        "id": "71598182.a16e4",
+        "type": "trigger-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Automation Nighttime Time Range Cucina",
+        "server": "89295009.0df17",
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityid": "input_datetime.nightmode_start_cucina",
+        "entityidfiltertype": "exact",
+        "debugenabled": false,
+        "constraints": [],
+        "constraintsmustmatch": "all",
+        "outputs": 2,
+        "customoutputs": [],
+        "outputinitially": true,
+        "state_type": "str",
+        "x": 430,
+        "y": 940,
+        "wires": [
+            [
+                "a7199de4.f3c7c",
+                "fb92dbbe.345768"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "55dcbd4d.8a7194",
+        "type": "trigger-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Automation Nighttime Stop Time Range Cucina",
+        "server": "89295009.0df17",
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityid": "input_datetime.nightmode_stop_cucina",
+        "entityidfiltertype": "exact",
+        "debugenabled": false,
+        "constraints": [],
+        "constraintsmustmatch": "all",
+        "outputs": 2,
+        "customoutputs": [],
+        "outputinitially": true,
+        "state_type": "str",
+        "x": 420,
+        "y": 1060,
+        "wires": [
+            [
+                "82f5622f.0fe55",
+                "fb92dbbe.345768"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "fb92dbbe.345768",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "Set Days",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[1,2,3,4,5,6,7]",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "days",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 715,
+        "y": 995,
+        "wires": [
+            [
+                "32a5d844.fa4ee8"
+            ]
+        ]
+    },
+    {
+        "id": "80eac25d.c8fca",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Minimum Luminance Threshold Variable",
+        "rules": [
+            {
+                "t": "set",
+                "p": "luminancethreshold",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1260,
+        "y": 1220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c0782576.3f89e8",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "Override values",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "override",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1075,
+        "y": 1075,
+        "wires": [
+            [
+                "b7aa37b5.50b7d8"
+            ]
+        ]
+    },
+    {
+        "id": "a7fa25cf.29cb08",
+        "type": "trigger-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Minimum Luminance Threshold Cucina",
+        "server": "89295009.0df17",
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityid": "input_number.luminance_minimum_cucina",
+        "entityidfiltertype": "exact",
+        "debugenabled": false,
+        "constraints": [],
+        "constraintsmustmatch": "all",
+        "outputs": 2,
+        "customoutputs": [],
+        "outputinitially": false,
+        "state_type": "num",
+        "x": 880,
+        "y": 1220,
+        "wires": [
+            [
+                "80eac25d.c8fca"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "bf22d28f.8bf3f",
+        "type": "trigger-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Nightmode Luminance Cucina",
+        "server": "89295009.0df17",
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityid": "input_number.nightmode_luminance_cucina",
+        "entityidfiltertype": "exact",
+        "debugenabled": false,
+        "constraints": [],
+        "constraintsmustmatch": "all",
+        "outputs": 2,
+        "customoutputs": [],
+        "outputinitially": true,
+        "state_type": "str",
+        "x": 1590,
+        "y": 1320,
+        "wires": [
+            [
+                "4085ff42.74357"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "4085ff42.74357",
+        "type": "function",
+        "z": "936cf0a3.29d0c",
+        "name": "trim",
+        "func": "var str = msg.payload;\nvar brt = str.slice(0,str.length-2) ;\nmsg.topic = \"brt\" ;\nmsg.payload = brt ;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 1830,
+        "y": 1320,
+        "wires": [
+            [
+                "ce7af863.ecd9d8"
+            ]
+        ]
+    },
+    {
+        "id": "ce7af863.ecd9d8",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "Update  Luminance Level Variable",
+        "rules": [
+            {
+                "t": "set",
+                "p": "nightlightlevel",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 2075,
+        "y": 1315,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "111af340.ba4bad",
+        "type": "api-call-service",
+        "z": "936cf0a3.29d0c",
+        "name": "Setup Full Brightness Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "debugenabled": false,
+        "service_domain": "light",
+        "service": "turn_on",
+        "entityId": "light.luce_cucina_hue",
+        "data": "{\"brightness_pct\":\"100\"}",
+        "dataType": "json",
+        "mergecontext": "",
+        "output_location": "",
+        "output_location_type": "none",
+        "mustacheAltTags": false,
+        "x": 1800,
+        "y": 1100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "79a99b2.ee60164",
+        "type": "api-call-service",
+        "z": "936cf0a3.29d0c",
+        "name": "Set Light Brightness Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "debugenabled": false,
+        "service_domain": "light",
+        "service": "turn_on",
+        "entityId": "light.luce_cucina_hue",
+        "data": "{\"brightness_pct\":{{payload}}}",
+        "dataType": "json",
+        "mergecontext": "",
+        "output_location": "",
+        "output_location_type": "none",
+        "mustacheAltTags": false,
+        "x": 2335,
+        "y": 1035,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "93754f0c.56e83",
+        "type": "stoptimer",
+        "z": "936cf0a3.29d0c",
+        "duration": "500",
+        "units": "Millisecond",
+        "payloadtype": "num",
+        "payloadval": "0",
+        "name": "Wait for HUE",
+        "x": 1545,
+        "y": 1035,
+        "wires": [
+            [
+                "f57a7933.6dbee8"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "ffbe9cd6.a241d",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "nightlightlevel",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 2080,
+        "y": 1040,
+        "wires": [
+            [
+                "79a99b2.ee60164",
+                "86620627.d9aa58"
+            ]
+        ]
+    },
+    {
+        "id": "f57a7933.6dbee8",
+        "type": "api-call-service",
+        "z": "936cf0a3.29d0c",
+        "name": "Set Nightmode Brightness Cucina",
+        "server": "89295009.0df17",
+        "version": 1,
+        "debugenabled": false,
+        "service_domain": "light",
+        "service": "turn_on",
+        "entityId": "light.luce_cucina_hue",
+        "data": "{\"brightness_pct\":\"0\"}",
+        "dataType": "json",
+        "mergecontext": "",
+        "output_location": "",
+        "output_location_type": "none",
+        "mustacheAltTags": false,
+        "x": 1820,
+        "y": 1040,
+        "wires": [
+            [
+                "ffbe9cd6.a241d",
+                "86620627.d9aa58"
+            ]
+        ]
+    },
+    {
+        "id": "dcb61dad.0944",
+        "type": "stoptimer",
+        "z": "936cf0a3.29d0c",
+        "duration": "500",
+        "units": "Millisecond",
+        "payloadtype": "num",
+        "payloadval": "0",
+        "name": "Wait for HUE",
+        "x": 1545,
+        "y": 1115,
+        "wires": [
+            [
+                "111af340.ba4bad"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "9c272774.333c18",
+        "type": "function",
+        "z": "936cf0a3.29d0c",
+        "name": "trim",
+        "func": "var str = msg.payload;\nvar start = str.slice(0,str.length-3) ;\nmsg.topic = \"start\" ;\nmsg.payload = start ;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 485,
+        "y": 555,
+        "wires": [
+            [
+                "25b26e97.b2c442"
+            ]
+        ]
+    },
+    {
+        "id": "25b26e97.b2c442",
+        "type": "join",
+        "z": "936cf0a3.29d0c",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "",
+        "joinerType": "str",
+        "accumulate": true,
+        "timeout": "",
+        "count": "1",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 693,
+        "y": 615,
+        "wires": [
+            [
+                "3b83479b.50a3e8"
+            ]
+        ]
+    },
+    {
+        "id": "62511bb8.25cc04",
+        "type": "function",
+        "z": "936cf0a3.29d0c",
+        "name": "trim",
+        "func": "var str = msg.payload;\nvar stop = str.slice(0,str.length-3) ;\nmsg.topic = \"stop\" ;\nmsg.payload = stop ;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 473,
+        "y": 675,
+        "wires": [
+            [
+                "25b26e97.b2c442"
+            ]
+        ]
+    },
+    {
+        "id": "7215726c.7a33cc",
+        "type": "trigger-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Automation Start Time Range Cucina",
+        "server": "89295009.0df17",
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityid": "input_datetime.night_start_cucina",
+        "entityidfiltertype": "exact",
+        "debugenabled": false,
+        "constraints": [],
+        "constraintsmustmatch": "all",
+        "outputs": 2,
+        "customoutputs": [],
+        "outputinitially": true,
+        "state_type": "str",
+        "x": 190,
+        "y": 560,
+        "wires": [
+            [
+                "9c272774.333c18",
+                "785fc78e.a0a568"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "84d05d29.a3a93",
+        "type": "trigger-state",
+        "z": "936cf0a3.29d0c",
+        "name": "Update Automation Stop Time Range Cucina",
+        "server": "89295009.0df17",
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityid": "input_datetime.night_stop_cucina",
+        "entityidfiltertype": "exact",
+        "debugenabled": false,
+        "constraints": [],
+        "constraintsmustmatch": "all",
+        "outputs": 2,
+        "customoutputs": [],
+        "outputinitially": true,
+        "state_type": "str",
+        "x": 190,
+        "y": 680,
+        "wires": [
+            [
+                "62511bb8.25cc04",
+                "785fc78e.a0a568"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "3b83479b.50a3e8",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "Override values",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "override",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 843,
+        "y": 615,
+        "wires": [
+            [
+                "1b86530f.43e72d"
+            ]
+        ]
+    },
+    {
+        "id": "785fc78e.a0a568",
+        "type": "change",
+        "z": "936cf0a3.29d0c",
+        "name": "Set Days",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[1,2,3,4,5,6,7]",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "days",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 463,
+        "y": 615,
+        "wires": [
+            [
+                "25b26e97.b2c442"
+            ]
+        ]
+    },
+    {
+        "id": "86620627.d9aa58",
+        "type": "debug",
+        "z": "936cf0a3.29d0c",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 2160,
+        "y": 1160,
+        "wires": []
+    },
+    {
+        "id": "89295009.0df17",
+        "type": "server",
+        "z": "",
+        "name": "Home Assistant",
+        "legacy": false,
+        "addon": false,
+        "rejectUnauthorizedCerts": true,
+        "ha_boolean": "y|yes|true|on|home|open",
+        "connectionDelay": true,
+        "cacheJson": true
+    },
+    {
+        "id": "b687ce87.d2e7d",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "YourSercer",
+        "broker": "YourIP",
+        "port": "1883",
+        "clientid": "nodered",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "nodered/status",
+        "birthQos": "0",
+        "birthPayload": "online",
+        "closeTopic": "nodered/status",
+        "closeQos": "0",
+        "closePayload": "offline",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    }
+]
