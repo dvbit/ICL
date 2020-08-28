@@ -3,6 +3,7 @@ Intelligent Configurable Light
 Documentation WIP
 
 This Repository hosts a nodered flow, lovelace config and homeassistant yaml definitions to support an "Intelligent Configurable Light"
+Please import subflow too.
 
 The Flow is HEAVILY inspired from https://www.reddit.com/r/homeassistant/comments/afk6cd/building_smarter_motion_lighting_nodered_finite/ 
 I added some additional features.
@@ -60,3 +61,4 @@ node-red-contrib-nighttime
 
 Plus additional subflow (file subflow)
 
+Custom lovelace card as per the lovelace file
