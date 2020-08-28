@@ -1,0 +1,69 @@
+##################################################################################
+# Boolean Switch for Intelligent Configurable Light : Movement Sensor Automation Switch
+# If true movement sensor automation for light will be enabled
+# upon movement detection, if all conditions are satisfied, light will be turned on 
+# at a preset intensity related to time of day  
+##################################################################################
+
+movement_sensor_automation_cucina:
+  name: Movement Sensor Automation Cucina
+
+##################################################################################
+# Boolean Switch for Intelligent Configurable Light : Movement Sensor Automation Override
+# Use this boolean to trigger an override of Movement Sensor Automation
+# If true Movement will not trigger the automation
+##################################################################################
+
+movement_sensor_automation_override_cucina:
+  name: Movement Sensor Automation Override Cucina
+
+##################################################################################
+# Boolean Switch for Intelligent Configurable Light : Auto Off after timeout expired in manual mode
+# If True after a parametrizable amount of time after the switch has not been touched
+# either via UI or physically the light will be turned off
+##################################################################################
+
+manual_auto_off_cucina:
+  name: Manual Auto Off Cucina
+
+##################################################################################
+# Boolean Switch for Intelligent Configurable Light : Use night status / time range for automation trigger
+# If True night state (node-red-contrib-nighttime) will be used : if it is night automation will be triggered
+# If False the timerenage setup via UI will be used : if in time range automation will be triggered
+##################################################################################
+
+time_range_type_cucina:
+  name: Time Range Type Cucina  
+
+##################################################################################
+# Boolean Switch for Intelligent Configurable Light : Manual mode automation
+# If True Manual Switch management will be on:
+# As soon as a switch is touched either via UI or physically Movement sensor automation will be
+# turned off for a preset parametrizable time interval.
+# time countdown is reset at each interaction (i.e. rolling window is used)
+# when time expires if auto off is enabled, after a preset parametrizable time interval, 
+# light will be turned off and movement sensor automation is turned back on   
+##################################################################################
+
+manual_switch_automation_cucina:
+  name: Manual Switch Automation Cucina
+
+##################################################################################
+# Boolean Switch for Intelligent Configurable Light : Switch Automation Override
+# Use this boolean to trigger an override of Manual Automation
+# If true Manual interaction will not trigger automation
+##################################################################################
+
+manual_switch_automation_override_cucina:
+  name: Manual Switch Automation Override Cucina
+
+##################################################################################
+# Boolean Switch for Intelligent Configurable Light : Use Light Level for Movement Sensor Automation
+# Use this boolean to trigger light based on parametrizable luminance value
+# If true luminance threshold is used
+##################################################################################
+
+#use_luminance_cucina:
+#  name: Usa Luminance per Cucina
+#use_luminance_light:
+#  name: Use Luminance for Light
