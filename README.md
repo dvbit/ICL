@@ -47,3 +47,5 @@ I enclose a
 1) a very rough interface having all parameters on one stackin card.
 In my mind the final version would be much more slick hiding most of the parameters: again any suggestions are welcome
 2) yaml files defining the ui resources used
+
+Finally: replace in the files "Cucina" (italian for kitchen :-) with your rooms light/sensor name
